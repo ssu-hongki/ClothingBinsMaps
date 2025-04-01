@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>서울시 의류수거함 지도</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo"></script>
+
+    <script>
+      let map;
+      const locations = {
+        "동작구": { lat: 37.5023, lng: 126.9486 },
+        "강남구": { lat: 37.5172, lng: 127.0473 },
+        "서초구": { lat: 37.4836, lng: 127.0326 }
+      };
+
+      async function initMap() {
+        const response = await fetch('/bins');
+        const bins = await response.json();
+
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 13,
+          center: locations["동작구"],
+        });
+
+        bins.forEach(bin => {
+          const marker = new google.maps.Marker({
+            position: { lat: bin.lat, lng: bin.lng },
+            map,
+            title: bin.name,
+          });
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: `<b>${bin.name}</b><br>${bin.address}`,
+          });
+
+          marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+            document.getElementById("info").innerHTML = `
+              <div class="bg-white p-4 rounded-lg shadow-md border">
+                <h2 class="text-xl font-semibold text-green-700">${bin.name}</h2>
+                <p class="text-gray-700">${bin.address}</p>
+              </div>
+            `;
+          });
+        });
+      }
+
+      function moveToGu(guName) {
+        const location = locations[guName];
+        map.setCenter(location);
+        map.setZoom(14);
+      }
+    </script>
+  </head>
+
+  <body class="bg-gray-50 text-gray-900 font-sans" onload="initMap()">
+    <!-- 헤더 -->
+    <header class="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-6 shadow-md">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold">👕 서울시 의류수거함 위치 안내</h1>
+        <p class="text-sm mt-1">동작구 / 강남구 / 서초구별 수거함 위치 확인</p>
+      </div>
+    </header>
+
+    <!-- 구 선택 버튼 -->
+    <section class="flex justify-center gap-4 my-6">
+      <button onclick="moveToGu('동작구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">동작구</button>
+      <button onclick="moveToGu('강남구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">강남구</button>
+      <button onclick="moveToGu('서초구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">서초구</button>
+    </section>
+
+    <!-- 지도 -->
+    <main class="flex flex-col items-center px-4">
+      <div id="map" class="w-full max-w-5xl h-[600px] rounded-xl shadow-lg"></div>
+      <div id="info" class="w-full max-w-5xl mt-6"></div>
+    </main>
+  </body>
+</html>
