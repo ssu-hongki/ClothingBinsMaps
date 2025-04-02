@@ -1,83 +1,168 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>서울시 의류수거함 지도</title>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ gu }} 의류수거함 지도</title>
+  <style>
+    #map { height: 80vh; width: 100%; }
+    #info-box {
+      padding: 1rem;
+      background: #f7f7f7;
+      border-top: 1px solid #ccc;
+      font-family: sans-serif;
+    }
+    textarea {
+      width: 100%;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center;">{{ gu }} 의류수거함 지도</h2>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 🔍 주소 검색창 -->
+  <div style="text-align: center; margin: 10px;">
+    <input type="text" id="search-input" placeholder="주소 검색 (예: 노량진)" style="width: 300px; padding: 5px;">
+    <button onclick="searchAddress()">검색</button>
+  </div>
 
-    <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo"></script>
+  <div id="map"></div>
 
-    <script>
-      let map;
-      const locations = {
-        "동작구": { lat: 37.5023, lng: 126.9486 },
-        "강남구": { lat: 37.5172, lng: 127.0473 },
-        "서초구": { lat: 37.4836, lng: 127.0326 }
-      };
+  <div id="info-box">
+    <h3 id="bin-title">수거함 정보</h3>
+    <p id="bin-address">주소: </p>
 
-      async function initMap() {
-        const response = await fetch('/bins');
-        const bins = await response.json();
+    <form method="POST" action="/add-review">
+      <input type="hidden" name="bin_id" id="bin-id-input">
+      <input type="hidden" name="gu" value="{{ gu }}">
+      <textarea name="content" rows="2" placeholder="댓글을 입력하세요" required></textarea>
+      <button type="submit" style="margin-top: 6px;">댓글 등록</button>
+    </form>
 
-        map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 13,
-          center: locations["동작구"],
+    <div id="review-list" style="margin-top: 1rem;">
+      <strong>💬 후기 목록</strong>
+      <div id="reviews-container" style="margin-top: 4px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const gu = "{{ gu }}";
+    const isAdmin = "{{ 'true' if session.get('admin') else 'false' }}" === "true";
+
+    let searchMarker = null;  // 🔵 검색 마커는 하나만 유지
+
+    async function initMap() {
+      const res = await fetch(`/bins?gu=${gu}`);
+      const bins = await res.json();
+
+      const center = bins.length > 0
+        ? { lat: bins[0].lat, lng: bins[0].lng }
+        : { lat: 37.5, lng: 127.0 };
+
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 13,
+        center: center,
+      });
+
+      window.currentMap = map;
+
+      bins.forEach(bin => {
+        const marker = new google.maps.Marker({
+          position: { lat: bin.lat, lng: bin.lng },
+          map,
+          title: bin.name
         });
 
-        bins.forEach(bin => {
-          const marker = new google.maps.Marker({
-            position: { lat: bin.lat, lng: bin.lng },
+        marker.addListener('click', async () => {
+          document.getElementById('bin-title').textContent = bin.name;
+          document.getElementById('bin-address').textContent = "주소: " + bin.address;
+          document.getElementById('bin-id-input').value = bin.id;
+
+          const res = await fetch(`/reviews/${bin.id}`);
+          const comments = await res.json();
+
+          const container = document.getElementById('reviews-container');
+          container.innerHTML = comments.length > 0
+            ? comments.map(r => `
+                <p>
+                  🗨️ ${r.content}
+                  <span style="color:gray; font-size:0.8em;">(${r.created_at})</span>
+                  ${isAdmin ? `
+                    <a href="/edit-review/${r.id}">✏️</a>
+                    <a href="/delete-review/${r.id}?gu=${gu}" onclick="return confirm('삭제할까요?')">❌</a>
+                  ` : ''}
+                </p>
+              `).join('')
+            : '<p>아직 댓글이 없습니다.</p>';
+        });
+      });
+
+      // 📍 GPS 위치 마커
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+
+            new google.maps.Marker({
+              position: userLocation,
+              map,
+              title: "내 위치",
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: '#4285F4',
+                fillOpacity: 1,
+                strokeWeight: 2,
+                strokeColor: 'white'
+              }
+            });
+
+            map.setCenter(userLocation);
+          },
+          () => {
+            console.log("⚠️ 위치 정보 허용 안 됨");
+          }
+        );
+      }
+    }
+
+    // 🔍 주소 검색 기능 (파란 마커, 하나만 유지)
+    function searchAddress() {
+      const input = document.getElementById("search-input").value;
+      if (!input) return;
+
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: input }, (results, status) => {
+        if (status === "OK") {
+          const location = results[0].geometry.location;
+          const map = window.currentMap;
+
+          map.setCenter(location);
+          map.setZoom(15);
+
+          // 기존 마커 제거
+          if (searchMarker) {
+            searchMarker.setMap(null);
+          }
+
+          // 새로운 파란 마커 추가
+          searchMarker = new google.maps.Marker({
+            position: location,
             map,
-            title: bin.name,
+            title: input,
+            icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'  // 🔵 파란색 마커
           });
+        } else {
+          alert("주소를 찾을 수 없습니다: " + status);
+        }
+      });
+    }
+  </script>
 
-          const infoWindow = new google.maps.InfoWindow({
-            content: `<b>${bin.name}</b><br>${bin.address}`,
-          });
-
-          marker.addListener('click', () => {
-            infoWindow.open(map, marker);
-            document.getElementById("info").innerHTML = `
-              <div class="bg-white p-4 rounded-lg shadow-md border">
-                <h2 class="text-xl font-semibold text-green-700">${bin.name}</h2>
-                <p class="text-gray-700">${bin.address}</p>
-              </div>
-            `;
-          });
-        });
-      }
-
-      function moveToGu(guName) {
-        const location = locations[guName];
-        map.setCenter(location);
-        map.setZoom(14);
-      }
-    </script>
-  </head>
-
-  <body class="bg-gray-50 text-gray-900 font-sans" onload="initMap()">
-    <!-- 헤더 -->
-    <header class="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-6 shadow-md">
-      <div class="text-center">
-        <h1 class="text-4xl font-bold">👕 서울시 의류수거함 위치 안내</h1>
-        <p class="text-sm mt-1">동작구 / 강남구 / 서초구별 수거함 위치 확인</p>
-      </div>
-    </header>
-
-    <!-- 구 선택 버튼 -->
-    <section class="flex justify-center gap-4 my-6">
-      <button onclick="moveToGu('동작구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">동작구</button>
-      <button onclick="moveToGu('강남구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">강남구</button>
-      <button onclick="moveToGu('서초구')" class="bg-white border px-4 py-2 rounded-lg shadow hover:bg-green-100 transition">서초구</button>
-    </section>
-
-    <!-- 지도 -->
-    <main class="flex flex-col items-center px-4">
-      <div id="map" class="w-full max-w-5xl h-[600px] rounded-xl shadow-lg"></div>
-      <div id="info" class="w-full max-w-5xl mt-6"></div>
-    </main>
-  </body>
+  <!-- ✅ API 키 넣기 -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo&callback=initMap" async defer></script>
+</body>
 </html>
