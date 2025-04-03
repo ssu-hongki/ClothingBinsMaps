@@ -3,8 +3,16 @@ services:
     name: clothing-bins-map
     env: python
     buildCommand: ""
-    startCommand: "python app.py"
-    envVars:
-      - key: FLASK_ENV
-        value: production
+    startCommand: python3 app.py
     plan: free
+    envVars:
+      - key: MYSQL_HOST
+        value: 34.27.82.36
+      - key: MYSQL_USER
+        value: admin
+      - key: MYSQL_PASSWORD
+        value: admin
+      - key: MYSQL_DB
+        value: clothing_bins_db
+      - key: ADMIN_PASSWORD
+        value: admin

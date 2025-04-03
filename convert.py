@@ -1,68 +1,80 @@
 import csv
-import json
-import os
 import chardet
+import os
+import pymysql
+from dotenv import load_dotenv
 
-# ✅ 자동 인코딩 감지 함수
-def detect_encoding(filepath):
-    with open(filepath, 'rb') as f:
-        return chardet.detect(f.read())['encoding']
+load_dotenv()
 
-# ✅ 구별 CSV 파일 정보
-files = {
-    "동작구": "bins_dongjak.csv",
-    "강남구": "bins_gangnam.csv",
-    "서초구": "bins_seocho.csv",
-    "관악구": "bins_gwanak.csv"
-}
+def get_connection():
+    return pymysql.connect(
+        host=os.getenv('MYSQL_HOST'),
+        user=os.getenv('MYSQL_USER'),
+        password=os.getenv('MYSQL_PASSWORD'),
+        database=os.getenv('MYSQL_DB'),
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
-all_data = []
+files = [
+    ('bins_dongjak.csv', '동작구'),
+    ('bins_gangnam.csv', '강남구'),
+    ('bins_seocho.csv', '서초구'),
+    ('bins_gwanak.csv', '관악구')
+]
 
-# ✅ 각 구 CSV 순회하면서 데이터 읽기
-for gu, filename in files.items():
-    filepath = os.path.join("data", filename)
-    encoding = detect_encoding(filepath)
-    print(f"📂 {filename} 인코딩 감지됨 → {encoding}")
+conn = get_connection()
+cursor = conn.cursor()
+inserted_count = 0
 
-    with open(filepath, newline='', encoding=encoding) as f:
+for filename, gu in files:
+    file_path = os.path.join('data', filename)
+
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+        print(f"📂 {filename} 인코딩 감지됨 → {encoding}")
+
+    with open(file_path, 'r', encoding=encoding) as f:
         reader = csv.DictReader(f)
-
-        for row in reader:
+        for idx, row in enumerate(reader):
             try:
-                lat = float(row['위도'])
-                lng = float(row['경도'])
+                # ✅ 필드명 깨짐 방지: BOM 제거 + strip
+                row = {key.strip().replace('\ufeff', ''): value for key, value in row.items()}
 
-                # 💡 주소 컬럼 자동 대응
                 address = (
                     row.get('주소') or
                     row.get('도로명 주소') or
                     row.get('소재지도로명주소') or
-                    row.get('지번주소') or
-                    ''
+                    row.get('소재지지번주소') or
+                    row.get('위치') or
+                    '주소 미상'
                 )
 
-                # 💡 이름 컬럼 자동 대응
-                name = (
-                    row.get('이름') or
-                    row.get('설치장소명') or
-                    f"{gu} 수거함"
-                )
+                name = row.get('설치장소명') or address
+                lat = float(row['위도'])
+                lng = float(row['경도'])
 
-                all_data.append({
-                    "name": name,
-                    "address": address,
-                    "lat": lat,
-                    "lng": lng,
-                    "gu": gu
-                })
+                # ✅ 덮어쓰기 방식 (좌표+구가 같으면 교체)
+                cursor.execute("""
+                    REPLACE INTO bins (id, name, address, lat, lng, gu)
+                    VALUES (
+                        (SELECT id FROM (
+                            SELECT id FROM bins WHERE lat = %s AND lng = %s AND gu = %s LIMIT 1
+                        ) AS subquery),
+                        %s, %s, %s, %s, %s
+                    )
+                """, (lat, lng, gu, name, address, lat, lng, gu))
+
+                inserted_count += 1
+                if inserted_count % 100 == 0:
+                    print(f"➡️ {inserted_count}개 삽입 중...")
 
             except Exception as e:
-                print(f"⚠️ {filename}에서 에러 발생: {e}")
-                continue
+                print(f"❌ [행 {idx}] 오류 발생: {e}")
+                print(f"  ▶ 주소: {address}, 위도: {row.get('위도')}, 경도: {row.get('경도')}")
 
-# ✅ 결과 저장
-output_path = 'data/bins_all.json'
-with open(output_path, 'w', encoding='utf-8') as f:
-    json.dump(all_data, f, ensure_ascii=False, indent=2)
+conn.commit()
+conn.close()
 
-print(f"\n✅ 총 {len(all_data)}개 수거함 데이터 → {output_path} 저장 완료!")
+print(f"\n🎉 총 {inserted_count}개 수거함 → 클라우드 MySQL 덮어쓰기 완료!")

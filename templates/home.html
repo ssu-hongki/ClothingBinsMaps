@@ -3,17 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <title>서울시 의류수거함 지도</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+    .btn-container {
+      margin-top: 30px;
+    }
+    .gu-btn {
+      padding: 15px 30px;
+      font-size: 18px;
+      margin: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .gu-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
-<body class="bg-green-50 flex flex-col items-center justify-center h-screen">
-  <h1 class="text-3xl font-bold mb-6">서울시 의류수거함 지도</h1>
-  <p class="mb-6 text-gray-700">구를 선택해주세요</p>
+<body>
+  <h1>서울시 의류수거함 지도</h1>
+  <p>구를 선택해 지도를 확인하세요</p>
 
-  <div class="grid grid-cols-2 gap-4">
-    <a href="/map?gu=강남구" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 text-center">강남구</a>
-    <a href="/map?gu=서초구" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 text-center">서초구</a>
-    <a href="/map?gu=관악구" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 text-center">관악구</a>
-    <a href="/map?gu=동작구" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 text-center">동작구</a>
+  <div class="btn-container">
+    <button class="gu-btn" onclick="location.href='/map?gu=강남구'">강남구</button>
+    <button class="gu-btn" onclick="location.href='/map?gu=서초구'">서초구</button>
+    <button class="gu-btn" onclick="location.href='/map?gu=동작구'">동작구</button>
+    <button class="gu-btn" onclick="location.href='/map?gu=관악구'">관악구</button>
   </div>
 </body>
 </html>
