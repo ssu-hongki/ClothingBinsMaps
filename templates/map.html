@@ -12,7 +12,7 @@
     }
     #map {
       width: 100%;
-      height: 500px; /* 💡 살짝 줄임 */
+      height: 500px;
       margin-top: 10px;
     }
     #info, #reviews {
@@ -33,7 +33,7 @@
 <body>
   <h2>{{ gu }} 의류수거함 지도</h2>
 
-  <!-- ✅ 검색창 (지도 위, 고정 X) -->
+  <!-- 검색창 -->
   <div id="search-box">
     <input type="text" id="search-input" placeholder="주소 또는 장소 검색" />
     <button onclick="searchLocation()">검색</button>
@@ -126,9 +126,10 @@
           } else {
             data.forEach(r => {
               let reviewHTML = `<div><strong>🕒 ${r.created_at}</strong><br>`;
+
               if (isAdmin) {
                 reviewHTML += `
-                  <form method="POST" action="/delete-review/${r.id}">
+                  <form onsubmit="event.preventDefault(); deleteReview(${r.id});">
                     <button type="submit">삭제</button>
                   </form>
                   <form onsubmit="event.preventDefault(); updateReview(${r.id});">
@@ -138,6 +139,7 @@
               } else {
                 reviewHTML += `${r.content}`;
               }
+
               reviewHTML += `</div><hr>`;
               reviewsDiv.innerHTML += reviewHTML;
             });
@@ -178,7 +180,7 @@
       fetch(`/update-review/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `new_content=${encodeURIComponent(newContent)}`
+        body: `content=${encodeURIComponent(newContent)}`
       })
       .then(res => {
         if (res.ok) {
@@ -186,6 +188,20 @@
           location.reload();
         } else {
           alert("수정 실패!");
+        }
+      });
+    }
+
+    function deleteReview(id) {
+      fetch(`/delete-review/${id}`, {
+        method: 'POST'
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("삭제 완료!");
+          location.reload();
+        } else {
+          alert("삭제 실패!");
         }
       });
     }

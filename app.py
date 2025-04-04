@@ -6,6 +6,7 @@ from datetime import timedelta
 
 load_dotenv()
 
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.permanent_session_lifetime = timedelta(days=1)
