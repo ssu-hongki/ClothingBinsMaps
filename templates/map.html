@@ -4,60 +4,101 @@
   <meta charset="UTF-8">
   <title>{{ gu }} 의류수거함 지도</title>
   <style>
+    #search-box {
+      width: 90%;
+      margin: 20px auto;
+      display: flex;
+      gap: 10px;
+    }
     #map {
       width: 100%;
-      height: 500px;
+      height: 500px; /* 💡 살짝 줄임 */
+      margin-top: 10px;
     }
-    #bin-info {
-      margin-top: 20px;
+    #info, #reviews {
+      width: 90%;
+      margin: 20px auto;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      height: 60px;
+      margin-top: 5px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <h2>{{ gu }} 의류수거함 지도</h2>
-  <div id="map"></div>
 
-  <div id="bin-info">
-    <h3 id="bin-title">수거함 정보</h3>
-    <p id="bin-address">주소: </p>
-
-    <form action="/add-review" method="POST">
-      <input type="hidden" id="bin-id-input" name="bin_id">
-      <input type="hidden" name="gu" value="{{ gu }}">
-      <input type="text" name="content" placeholder="댓글을 입력하세요" required>
-      <button type="submit">작성</button>
-    </form>
-
-    <div id="reviews">
-      <h4>댓글 목록</h4>
-      <ul id="review-list"></ul>
-    </div>
+  <!-- ✅ 검색창 (지도 위, 고정 X) -->
+  <div id="search-box">
+    <input type="text" id="search-input" placeholder="주소 또는 장소 검색" />
+    <button onclick="searchLocation()">검색</button>
   </div>
 
+  <div id="map"></div>
+
+  <div id="info">
+    <h3 id="bin-title"></h3>
+    <p id="bin-address"></p>
+    <form method="POST" action="/add-review">
+      <input type="hidden" name="bin_id" id="bin-id-input">
+      <input type="hidden" name="gu" value="{{ gu }}">
+      <textarea name="content" placeholder="후기를 입력하세요..."></textarea>
+      <br>
+      <button type="submit">작성</button>
+    </form>
+  </div>
+
+  <div id="reviews"></div>
+
   <script>
+    const isAdmin = "{{ 'true' if session.get('admin') else 'false' }}" === "true";
     let map;
-    let reviewList = document.getElementById('review-list');
+    let searchMarker = null;
 
     function initMap() {
+      const gu = "{{ gu }}";
       const centerGu = {
         '강남구': { lat: 37.5172, lng: 127.0473 },
         '서초구': { lat: 37.4837, lng: 127.0327 },
         '동작구': { lat: 37.5124, lng: 126.9390 },
         '관악구': { lat: 37.4784, lng: 126.9516 }
       };
-
-      const gu = "{{ gu }}";
-      const center = centerGu[gu] || { lat: 37.5665, lng: 126.9780 };
+      const defaultCenter = centerGu[gu] || { lat: 37.5665, lng: 126.9780 };
 
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 14,
-        center: center,
+        center: defaultCenter
       });
 
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const userPos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          map.setCenter(userPos);
+          new google.maps.Circle({
+            strokeColor: '#4285F4',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#4285F4',
+            fillOpacity: 0.35,
+            map,
+            center: userPos,
+            radius: 30
+          });
+        });
+      }
+
       fetch(`/bins?gu=${gu}`)
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(bin => {
+        .then(res => res.json())
+        .then(bins => {
+          bins.forEach(bin => {
             const marker = new google.maps.Marker({
               position: { lat: bin.lat, lng: bin.lng },
               map,
@@ -68,76 +109,89 @@
               document.getElementById('bin-title').textContent = bin.name;
               document.getElementById('bin-address').textContent = "주소: " + bin.address;
               document.getElementById('bin-id-input').value = bin.id;
-
-              // 댓글 목록 불러오기
-              fetch(`/reviews?bin_id=${bin.id}`)
-                .then(res => res.json())
-                .then(reviews => {
-                  reviewList.innerHTML = '';
-                  reviews.forEach(r => {
-                    const li = document.createElement('li');
-                    li.textContent = `${r.content} (${r.created_at})`;
-                    reviewList.appendChild(li);
-                  });
-                });
+              loadReviews(bin.id);
             });
           });
         });
+    }
 
-      // ✅ 현재 위치 마커
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const userPos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          new google.maps.Marker({
-            position: userPos,
-            map,
-            title: "내 위치",
-            icon: {
-              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-            }
-          });
-        });
-      }
-
-      // ✅ 검색 기능
-      const searchInput = document.createElement('input');
-      searchInput.type = 'text';
-      searchInput.placeholder = '주소를 입력하세요';
-      searchInput.style.marginTop = '10px';
-      document.body.insertBefore(searchInput, document.getElementById('bin-info'));
-
-      const searchButton = document.createElement('button');
-      searchButton.textContent = '검색';
-      document.body.insertBefore(searchButton, document.getElementById('bin-info'));
-
-      let searchMarker = null;
-
-      searchButton.addEventListener('click', () => {
-        const address = searchInput.value;
-        if (!address) return;
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: address }, (results, status) => {
-          if (status === 'OK') {
-            map.setCenter(results[0].geometry.location);
-            if (searchMarker) searchMarker.setMap(null);
-            searchMarker = new google.maps.Marker({
-              map: map,
-              position: results[0].geometry.location,
-              icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-            });
+    function loadReviews(binId) {
+      fetch(`/reviews?bin_id=${binId}`)
+        .then(res => res.json())
+        .then(data => {
+          const reviewsDiv = document.getElementById('reviews');
+          reviewsDiv.innerHTML = "<h3>후기 목록</h3>";
+          if (data.length === 0) {
+            reviewsDiv.innerHTML += "<p>작성된 후기가 없습니다.</p>";
           } else {
-            alert("주소를 찾을 수 없습니다.");
+            data.forEach(r => {
+              let reviewHTML = `<div><strong>🕒 ${r.created_at}</strong><br>`;
+              if (isAdmin) {
+                reviewHTML += `
+                  <form method="POST" action="/delete-review/${r.id}">
+                    <button type="submit">삭제</button>
+                  </form>
+                  <form onsubmit="event.preventDefault(); updateReview(${r.id});">
+                    <input type="text" id="edit-${r.id}" value="${r.content}" />
+                    <button type="submit">수정</button>
+                  </form>`;
+              } else {
+                reviewHTML += `${r.content}`;
+              }
+              reviewHTML += `</div><hr>`;
+              reviewsDiv.innerHTML += reviewHTML;
+            });
           }
         });
+    }
+
+    function searchLocation() {
+      const query = document.getElementById("search-input").value;
+      const geocoder = new google.maps.Geocoder();
+      if (!query) return alert("검색어를 입력하세요!");
+
+      geocoder.geocode({ address: query }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          const loc = results[0].geometry.location;
+          map.setCenter(loc);
+          if (searchMarker) searchMarker.setMap(null);
+          searchMarker = new google.maps.Marker({
+            position: loc,
+            map,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: '#4285F4',
+              fillOpacity: 1,
+              strokeWeight: 1,
+              strokeColor: 'white'
+            }
+          });
+        } else {
+          alert("검색 결과를 찾을 수 없습니다.");
+        }
+      });
+    }
+
+    function updateReview(id) {
+      const newContent = document.getElementById(`edit-${id}`).value;
+      fetch(`/update-review/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `new_content=${encodeURIComponent(newContent)}`
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("수정 완료!");
+          location.reload();
+        } else {
+          alert("수정 실패!");
+        }
       });
     }
   </script>
 
-  <!-- 🔑 너의 구글 Maps API 키를 여기에! -->
-  <script async defer
+  <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo&callback=initMap">
   </script>
 </body>
