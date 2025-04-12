@@ -7,50 +7,37 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 50px;
+      padding: 40px;
     }
     h1 {
-      margin-bottom: 30px;
-      color: #333;
+      margin-bottom: 40px;
     }
     .gu-buttons {
       display: flex;
-      justify-content: center;
-      gap: 20px;
       flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
     }
-    .gu-buttons button {
-      padding: 15px 30px;
-      font-size: 18px;
-      background-color: #4CAF50;
+    .gu-buttons a {
+      text-decoration: none;
+      background-color: #4285F4;
       color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 16px;
       transition: background-color 0.3s;
     }
-    .gu-buttons button:hover {
-      background-color: #45a049;
-    }
-    .admin-link {
-      margin-top: 40px;
-      font-size: 14px;
+    .gu-buttons a:hover {
+      background-color: #3367D6;
     }
   </style>
 </head>
 <body>
-  <h1>서울시 의류수거함 위치 서비스</h1>
+  <h1>서울시 구 선택</h1>
   <div class="gu-buttons">
-    <button onclick="location.href='/map?gu=강남구'">강남구</button>
-    <button onclick="location.href='/map?gu=서초구'">서초구</button>
-    <button onclick="location.href='/map?gu=동작구'">동작구</button>
-    <button onclick="location.href='/map?gu=관악구'">관악구</button>
-  </div>
-
-  <div class="admin-link">
-    <a href="/admin-login">관리자 로그인</a>
+    {% for gu in ["종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구", "성북구", "강북구", "도봉구", "노원구", "은평구", "서대문구", "마포구", "양천구", "강서구", "구로구", "금천구", "영등포구", "동작구", "관악구", "서초구", "강남구", "송파구", "강동구"] %}
+      <a href="/map?gu={{ gu }}">{{ gu }}</a>
+    {% endfor %}
   </div>
 </body>
 </html>
