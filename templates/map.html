@@ -2,213 +2,42 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>{{ gu }} 의류수거함 지도</title>
+  <title>서울시 의류수거함 지도</title>
   <style>
-    #search-box {
-      width: 90%;
-      margin: 20px auto;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      margin-bottom: 40px;
+    }
+    .gu-buttons {
       display: flex;
-      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
     }
-    #map {
-      width: 100%;
-      height: 500px;
-      margin-top: 10px;
+    .gu-buttons a {
+      text-decoration: none;
+      background-color: #4285F4;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: background-color 0.3s;
     }
-    #info, #reviews {
-      width: 90%;
-      margin: 20px auto;
-    }
-    textarea, input[type="text"] {
-      width: 100%;
-      height: 60px;
-      margin-top: 5px;
-    }
-    button {
-      padding: 8px 12px;
-      margin-top: 5px;
+    .gu-buttons a:hover {
+      background-color: #3367D6;
     }
   </style>
 </head>
 <body>
-  <h2>{{ gu }} 의류수거함 지도</h2>
-
-  <!-- 검색창 -->
-  <div id="search-box">
-    <input type="text" id="search-input" placeholder="주소 또는 장소 검색" />
-    <button onclick="searchLocation()">검색</button>
+  <h1>서울시 구 선택</h1>
+  <div class="gu-buttons">
+    {% for gu in ["종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구", "성북구", "강북구", "도봉구", "노원구", "은평구", "서대문구", "마포구", "양천구", "강서구", "구로구", "금천구", "영등포구", "동작구", "관악구", "서초구", "강남구", "송파구", "강동구"] %}
+      <a href="/map?gu={{ gu }}">{{ gu }}</a>
+    {% endfor %}
   </div>
-
-  <div id="map"></div>
-
-  <div id="info">
-    <h3 id="bin-title"></h3>
-    <p id="bin-address"></p>
-    <form method="POST" action="/add-review">
-      <input type="hidden" name="bin_id" id="bin-id-input">
-      <input type="hidden" name="gu" value="{{ gu }}">
-      <textarea name="content" placeholder="후기를 입력하세요..."></textarea>
-      <br>
-      <button type="submit">작성</button>
-    </form>
-  </div>
-
-  <div id="reviews"></div>
-
-  <script>
-    const isAdmin = "{{ 'true' if session.get('admin') else 'false' }}" === "true";
-    let map;
-    let searchMarker = null;
-
-    function initMap() {
-      const gu = "{{ gu }}";
-      const centerGu = {
-        '강남구': { lat: 37.5172, lng: 127.0473 },
-        '서초구': { lat: 37.4837, lng: 127.0327 },
-        '동작구': { lat: 37.5124, lng: 126.9390 },
-        '관악구': { lat: 37.4784, lng: 126.9516 }
-      };
-      const defaultCenter = centerGu[gu] || { lat: 37.5665, lng: 126.9780 };
-
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 14,
-        center: defaultCenter
-      });
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const userPos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          map.setCenter(userPos);
-          new google.maps.Circle({
-            strokeColor: '#4285F4',
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: '#4285F4',
-            fillOpacity: 0.35,
-            map,
-            center: userPos,
-            radius: 30
-          });
-        });
-      }
-
-      fetch(`/bins?gu=${gu}`)
-        .then(res => res.json())
-        .then(bins => {
-          bins.forEach(bin => {
-            const marker = new google.maps.Marker({
-              position: { lat: bin.lat, lng: bin.lng },
-              map,
-              title: bin.name
-            });
-
-            marker.addListener('click', () => {
-              document.getElementById('bin-title').textContent = bin.name;
-              document.getElementById('bin-address').textContent = "주소: " + bin.address;
-              document.getElementById('bin-id-input').value = bin.id;
-              loadReviews(bin.id);
-            });
-          });
-        });
-    }
-
-    function loadReviews(binId) {
-      fetch(`/reviews?bin_id=${binId}`)
-        .then(res => res.json())
-        .then(data => {
-          const reviewsDiv = document.getElementById('reviews');
-          reviewsDiv.innerHTML = "<h3>후기 목록</h3>";
-          if (data.length === 0) {
-            reviewsDiv.innerHTML += "<p>작성된 후기가 없습니다.</p>";
-          } else {
-            data.forEach(r => {
-              let reviewHTML = `<div><strong>🕒 ${r.created_at}</strong><br>`;
-
-              if (isAdmin) {
-                reviewHTML += `
-                  <form onsubmit="event.preventDefault(); deleteReview(${r.id});">
-                    <button type="submit">삭제</button>
-                  </form>
-                  <form onsubmit="event.preventDefault(); updateReview(${r.id});">
-                    <input type="text" id="edit-${r.id}" value="${r.content}" />
-                    <button type="submit">수정</button>
-                  </form>`;
-              } else {
-                reviewHTML += `${r.content}`;
-              }
-
-              reviewHTML += `</div><hr>`;
-              reviewsDiv.innerHTML += reviewHTML;
-            });
-          }
-        });
-    }
-
-    function searchLocation() {
-      const query = document.getElementById("search-input").value;
-      const geocoder = new google.maps.Geocoder();
-      if (!query) return alert("검색어를 입력하세요!");
-
-      geocoder.geocode({ address: query }, (results, status) => {
-        if (status === "OK" && results[0]) {
-          const loc = results[0].geometry.location;
-          map.setCenter(loc);
-          if (searchMarker) searchMarker.setMap(null);
-          searchMarker = new google.maps.Marker({
-            position: loc,
-            map,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 10,
-              fillColor: '#4285F4',
-              fillOpacity: 1,
-              strokeWeight: 1,
-              strokeColor: 'white'
-            }
-          });
-        } else {
-          alert("검색 결과를 찾을 수 없습니다.");
-        }
-      });
-    }
-
-    function updateReview(id) {
-      const newContent = document.getElementById(`edit-${id}`).value;
-      fetch(`/update-review/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `content=${encodeURIComponent(newContent)}`
-      })
-      .then(res => {
-        if (res.ok) {
-          alert("수정 완료!");
-          location.reload();
-        } else {
-          alert("수정 실패!");
-        }
-      });
-    }
-
-    function deleteReview(id) {
-      fetch(`/delete-review/${id}`, {
-        method: 'POST'
-      })
-      .then(res => {
-        if (res.ok) {
-          alert("삭제 완료!");
-          location.reload();
-        } else {
-          alert("삭제 실패!");
-        }
-      });
-    }
-  </script>
-
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo&callback=initMap">
-  </script>
 </body>
 </html>
