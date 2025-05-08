@@ -2,42 +2,69 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>서울시 의류수거함 지도</title>
+  <title>서울시 의류수거함 서비스</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-    h1 {
-      margin-bottom: 40px;
-    }
-    .gu-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-    }
-    .gu-buttons a {
-      text-decoration: none;
-      background-color: #4285F4;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 6px;
+    button {
+      padding: 10px 15px;
+      margin: 5px;
       font-size: 16px;
-      transition: background-color 0.3s;
+      cursor: pointer;
     }
-    .gu-buttons a:hover {
-      background-color: #3367D6;
+
+    .disabled {
+      background-color: #ccc;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      background-color: black;
+      color: #fff;
+      font-size: 12px;
+      padding: 5px;
+      border-radius: 4px;
+      position: absolute;
+      z-index: 1;
+      top: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
     }
   </style>
 </head>
 <body>
-  <h1>서울시 구 선택</h1>
-  <div class="gu-buttons">
-    {% for gu in ["종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구", "성북구", "강북구", "도봉구", "노원구", "은평구", "서대문구", "마포구", "양천구", "강서구", "구로구", "금천구", "영등포구", "동작구", "관악구", "서초구", "강남구", "송파구", "강동구"] %}
-      <a href="/map?gu={{ gu }}">{{ gu }}</a>
-    {% endfor %}
-  </div>
+  <h2>서울시 의류수거함 위치 서비스</h2>
+
+  {% set gu_list = [
+    ("종로구", True), ("중구", False), ("용산구", False), ("성동구", True), ("광진구", True),
+    ("동대문구", True), ("중랑구", True), ("성북구", True), ("강북구", True), ("도봉구", False),
+    ("노원구", False), ("은평구", True), ("서대문구", True), ("마포구", True), ("양천구", True),
+    ("강서구", True), ("구로구", False), ("금천구", True), ("영등포구", True), ("동작구", True),
+    ("관악구", True), ("서초구", True), ("강남구", True), ("송파구", True), ("강동구", True)
+  ] %}
+
+  {% for gu, has_data in gu_list %}
+    {% if has_data %}
+      <form action="/map" method="get" style="display:inline;">
+        <input type="hidden" name="gu" value="{{ gu }}">
+        <button>{{ gu }}</button>
+      </form>
+    {% else %}
+      <div class="tooltip">
+        <button class="disabled" disabled>{{ gu }}</button>
+        <span class="tooltiptext">데이터 없음</span>
+      </div>
+    {% endif %}
+  {% endfor %}
 </body>
 </html>

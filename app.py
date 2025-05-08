@@ -30,7 +30,9 @@ def home():
 # ✅ 2️⃣ 지도 페이지
 @app.route('/map')
 def map_page():
-    gu = request.args.get('gu', '강남구')
+    gu = request.args.get('gu')
+    if not gu:
+        return redirect('/')  # 홈화면으로 돌려보냄
     return render_template('map.html', gu=gu)
 
 # ✅ 3️⃣ 수거함 위치 마커 데이터

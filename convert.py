@@ -17,10 +17,26 @@ def get_connection():
     )
 
 files = [
+    ('bins_jongno.csv', '종로구'),
+    ('bins_seongdong.csv', '성동구'),
+    ('bins_dongdaemun.csv', '동대문구'),
+    ('bins_jungnang.csv', '중랑구'),
+    ('bins_seongbuk.csv', '성북구'),
+    ('bins_gangbuk.csv', '강북구'),
+    ('bins_eunpyeong.csv', '은평구'),
+    ('bins_seodaemun.csv', '서대문구'),
+    ('bins_mapo.csv', '마포구'),
+    ('bins_yangcheon.csv', '양천구'),
+    ('bins_gangseo.csv', '강서구'),
+    ('bins_geumcheon.csv', '금천구'),
+    ('bins_yeongdeungpo.csv', '영등포구'),
     ('bins_dongjak.csv', '동작구'),
-    ('bins_gangnam.csv', '강남구'),
+    ('bins_gwanak.csv', '관악구'),
     ('bins_seocho.csv', '서초구'),
-    ('bins_gwanak.csv', '관악구')
+    ('bins_gangnam.csv', '강남구'),
+    ('bins_songpa.csv', '송파구'),
+    ('bins_gangdong.csv', '강동구'),
+    ('bins_gwangjin.csv', '광진구')
 ]
 
 conn = get_connection()
@@ -48,6 +64,10 @@ for filename, gu in files:
                     row.get('소재지도로명주소') or
                     row.get('소재지지번주소') or
                     row.get('위치') or
+                    row.get('설치장소') or
+                    row.get('도로명주소') or
+                    row.get('설치장소(도로명주소)') or
+                    row.get('설치장소(도로명)') or
                     '주소 미상'
                 )
 
