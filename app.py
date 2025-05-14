@@ -6,7 +6,6 @@ from datetime import timedelta
 
 load_dotenv()
 
-
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.permanent_session_lifetime = timedelta(days=1)
@@ -21,7 +20,9 @@ def get_connection():
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor
     )
-
+@app.route('/generic')
+def generic():
+    return render_template('generic.html')
 # ✅ 1️⃣ 홈화면: 구 선택 페이지
 @app.route('/')
 def home():
@@ -33,7 +34,7 @@ def map_page():
     gu = request.args.get('gu')
     if not gu:
         return redirect('/')  # 홈화면으로 돌려보냄
-    return render_template('map.html', gu=gu)
+    return render_template('map_generic.html', gu=gu)
 
 # ✅ 3️⃣ 수거함 위치 마커 데이터
 @app.route('/bins')
@@ -81,6 +82,37 @@ def reviews():
             row['created_at'] = (row['created_at'] + timedelta(hours=9)).strftime('%Y-%m-%d %H:%M:%S')
 
     return jsonify(rows)
+# /admin : 게이트웨이
+@app.route('/admin')
+def admin_entry():
+    if session.get('admin'):
+        return redirect('/admin-dashboard')
+    return redirect('/admin-login')
+
+# 관리자 대시보드
+@app.route('/admin-dashboard')
+def admin_dashboard():
+    if not session.get('admin'):
+        return redirect('/admin-login')
+    return render_template('admin_dashboard_generic.html')
+
+# ✅ (관리자) 모든 리뷰 조회
+@app.route('/reviews-all')
+def reviews_all():
+    if not session.get('admin'):
+        return "권한 없음", 403
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, content, created_at FROM reviews ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    for row in rows:
+        if row['created_at']:
+            row['created_at'] = (row['created_at'] + timedelta(hours=9)).strftime('%Y-%m-%d %H:%M:%S')
+
+    return jsonify(rows)
+
 
 # ✅ 6️⃣ 댓글 삭제 (관리자)
 @app.route('/delete-review/<int:review_id>', methods=['POST'])

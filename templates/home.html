@@ -66,5 +66,12 @@
       </div>
     {% endif %}
   {% endfor %}
+  {# ---- 관리자 전용 버튼 ---- #}
+  {% if session.get('admin') %}
+    <hr>
+    <a href="/admin">
+      <button style="background:#2d6a4f;color:#fff;">관리자 대시보드</button>
+    </a>
+  {% endif %}
 </body>
 </html>

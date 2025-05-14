@@ -1,0 +1,235 @@
+<!DOCTYPE HTML>
+<!--
+	Phantom by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Generic - Phantom by HTML5 UP</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+		<noscript><link rel="stylesheet"href="{{ url_for('static', filename='css/noscript.css') }}"/></noscript>
+		<style>
+			#map      { width:100%; height:550px; border-radius:6px; }
+			#search-box{
+				position:absolute; top:10px; left:50%; transform:translateX(-50%);
+				z-index:5; width:400px; background:#fff; padding:10px; border:1px solid #ccc;
+				display:flex; gap:6px;
+			}
+			#search-box input{ flex:1; padding:6px; }
+		</style>
+	</head>
+	<body class="is-preload">
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<div class="inner">
+
+							<!-- Logo -->
+								<a href="/" class="logo">
+									<span class="symbol"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" /></span><span class="title"> 타이틀 </span>
+								</a>
+
+							<!-- Nav -->
+								<nav>
+									<ul>
+										<li><a href="#menu">Menu</a></li>
+									</ul>
+								</nav>
+
+						</div>
+					</header>
+
+				<!-- Menu -->
+					<nav id="menu">
+						<h2>Menu</h2>
+						<ul>
+							<li><a href="index.html">Home</a></li>
+							<li><a href="generic.html">Ipsum veroeros</a></li>
+							<li><a href="generic.html">Tempus etiam</a></li>
+							<li><a href="generic.html">Consequat dolor</a></li>
+							<li><a href="elements.html">Elements</a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+							<h1>{{ gu }} 의류수거함 지도</h1>
+							<!-- 검색창 -->
+							 <div id="search-box">
+								<input type="text" id="search-input" placeholder="주소 또는 장소 검색">
+								<button onclick="searchLocation()">검색</button>
+							</div>
+
+							<!-- 지도 -->
+							 <div id="map"></div>
+							</div>
+							<!-- 수거함 정보 -->
+							 <div id="info"><h3 id="bin-title"></h3>
+								<p id="bin-address"></p>
+								<form method="POST" action="/add-review">
+									<input type="hidden" name="bin_id" id="bin-id-input">
+									<input type="hidden" name="gu" value="{{ gu }}">
+									<textarea name="content" placeholder="후기를 입력하세요..."></textarea>
+									<br>
+									<button type="submit">작성</button>
+								</form>
+							</div>
+
+							<!-- 후기 리스트 -->
+							 <div id="reviews"></div>
+
+							 <!-- 관리자 여부를 JS로 넘기기 -->
+							  <script>
+								const isAdmin = {{ 'true' if session.get('admin') else 'false' }};
+							</script>
+
+							<script>
+								let map;
+								let searchMarker;
+
+								function initMap() {
+									const gu = "{{ gu }}";
+									const centerGu = {
+										'강남구': { lat: 37.5172, lng: 127.0473 },
+										'서초구': { lat: 37.4837, lng: 127.0327 },
+										'동작구': { lat: 37.5124, lng: 126.9390 },
+										'관악구': { lat: 37.4784, lng: 126.9516 }
+									};
+									const defaultCenter = centerGu[gu] || { lat: 37.5665, lng: 126.9780 };
+									map = new google.maps.Map(document.getElementById("map"), {
+										zoom: 14,
+										center: defaultCenter
+									});
+									// 현재 위치 파란 동그라미 표시
+									if (navigator.geolocation) {
+										navigator.geolocation.getCurrentPosition(position => {
+											const userPos = {
+												lat: position.coords.latitude,
+												lng: position.coords.longitude
+											};
+											map.setCenter(userPos);
+											new google.maps.Circle({
+												strokeColor: '#4285F4',
+												strokeOpacity: 0.8,
+												strokeWeight: 2,
+												fillColor: '#4285F4',
+												fillOpacity: 0.35,
+
+												map,
+												center: userPos,
+												radius: 30
+											});
+										});
+									}
+
+									// 수거함 마커 표시
+									fetch(`/bins?gu=${gu}`)
+									.then(res => res.json())
+        .then(bins => {
+          bins.forEach(bin => {
+            const marker = new google.maps.Marker({
+              position: { lat: bin.lat, lng: bin.lng },
+              map,
+              title: bin.name
+            });
+
+            marker.addListener('click', () => {
+              document.getElementById('bin-title').textContent = bin.name;
+              document.getElementById('bin-address').textContent = "주소: " + bin.address;
+              document.getElementById('bin-id-input').value = bin.id;
+              loadReviews(bin.id);
+            });
+          });
+        });
+    }
+
+    function loadReviews(binId) {
+      fetch(`/reviews?bin_id=${binId}`)
+        .then(res => res.json())
+        .then(data => {
+          const reviewsDiv = document.getElementById('reviews');
+          reviewsDiv.innerHTML = "<h3>후기 목록</h3>";
+          if (data.length === 0) {
+            reviewsDiv.innerHTML += "<p>작성된 후기가 없습니다.</p>";
+          } else {
+            data.forEach(r => {
+              let reviewHTML = `<div><strong>🕒 ${r.created_at}</strong><br>${r.content}</div>`;
+              if (isAdmin) {
+                reviewHTML += `
+                  <form method="POST" action="/delete-review/${r.id}">
+                    <button type="submit">삭제</button>
+                  </form>
+                `;
+              }
+              reviewsDiv.innerHTML += "<hr>" + reviewHTML;
+            });
+          }
+        });
+    }
+
+    function searchLocation() {
+      const input = document.getElementById('search-input').value;
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: input }, (results, status) => {
+        if (status === 'OK') {
+          const loc = results[0].geometry.location;
+          map.setCenter(loc);
+          if (searchMarker) searchMarker.setMap(null);
+          searchMarker = new google.maps.Marker({
+            position: loc,
+            map: map,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: '#4285F4',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2
+            }
+          });
+        } else {
+          alert('주소를 찾을 수 없습니다.');
+        }
+      });
+    }
+  </script>
+
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHmMxsmDeGtL6VLI5a34USu1jDCLqPnbo&callback=initMap">
+  </script>
+				<!-- Footer -->
+					<footer id="footer">
+						<div class="inner">
+							<section>
+								<h2>임시</h2>
+								<form method="post" action="#">
+									
+						
+								</form>
+							</section>
+							<section>
+								
+							</section>
+							<ul class="copyright">
+								<li>&copy; Untitled. All rights reserved</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+							</ul>
+						</div>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+			<script src="{{ url_for('static', filename='js/browser.min.js') }}"></script>
+			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>
+			<script src="{{ url_for('static', filename='js/util.js') }}"></script>
+			<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+	</body>
+</html>
