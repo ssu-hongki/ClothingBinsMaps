@@ -36,6 +36,10 @@ def map_page():
         return redirect('/')  # 홈화면으로 돌려보냄
     return render_template('map_generic.html', gu=gu)
 
+@app.route('/gu/<gu_name>') #정지훈 추가
+def gu_page(gu_name):
+    return redirect(f"/map?gu={gu_name}")
+
 # ✅ 3️⃣ 수거함 위치 마커 데이터
 @app.route('/bins')
 def bins():
