@@ -1,0 +1,242 @@
+#dobong:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #dobong:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #dongdaemun:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #dongdaemun:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #dongjak:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #dongjak:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #eunpyeong:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #eunpyeong:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #gangbuk:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #gangbuk:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #gangdong:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #gangdong:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #gangnam:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #gangnam:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #gangseo:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #gangseo:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #geumcheon:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #geumcheon:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #guro:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #guro:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #gwangjin:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #gwangjin:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #jongno:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #jongno:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #jung:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #jung:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #jungnang:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #jungnang:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #mapo:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #mapo:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #nowon:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #nowon:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #seocho:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #seocho:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #seodaemun:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #seodaemun:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #seongbuk:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #seongbuk:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #seongdong:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #seongdong:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #songpa:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #songpa:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #yangcheon:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #yangcheon:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #yeongdeungpo:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #yeongdeungpo:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  
+  #yongsan:hover path {
+    fill: orange;
+    cursor: pointer;
+  }
+  
+  #yongsan:hover text {
+    fill: darkblue;
+    cursor: pointer;
+  }
+  g text{
+    font-family: 'Courier New', Courier, monospace;
+  }
