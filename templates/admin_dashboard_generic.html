@@ -1,3 +1,11 @@
+{% set gu_list = [
+	"종로구", "성동구", "광진구",
+	"동대문구", "중랑구",  "성북구",  "강북구",
+	"은평구", "서대문구",  "마포구", "양천구",
+	"강서구", "금천구",  "영등포구", "동작구",    
+	"관악구", "서초구", "강남구", "송파구",
+	] %}
+	<!-- 중구,용산구,도봉구,노원구,구로구,강동구 False-->
 <!DOCTYPE HTML>
 <!--
 	Phantom by HTML5 UP
@@ -16,22 +24,19 @@
 		</style>
 	</head>
 	<body class="is-preload">
-		<!-- Wrapper -->
-			<div id="wrapper">
-
 				<!-- Header -->
 					<header id="header">
 						<div class="inner">
 
 							<!-- Logo -->
 								<a href="/" class="logo">
-									<span class="symbol"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" /></span><span class="title"> 타이틀 </span>
+									<span class="symbol"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" /></span><span class="title"> 서울시 의류수거함 지도 </span>
 								</a>
 
 							<!-- Nav -->
 								<nav>
 									<ul>
-										<li><a href="#menu">Menu</a></li>
+										<li><a href="#menu">메뉴</a></li>
 									</ul>
 								</nav>
 
@@ -39,16 +44,16 @@
 					</header>
 
 				<!-- Menu -->
-					<nav id="menu">
-						<h2>Menu</h2>
-						<ul>
-							<li><a href="index.html">Home</a></li>
-							<li><a href="generic.html">Ipsum veroeros</a></li>
-							<li><a href="generic.html">Tempus etiam</a></li>
-							<li><a href="generic.html">Consequat dolor</a></li>
-							<li><a href="elements.html">Elements</a></li>
-						</ul>
-					</nav>
+				 <nav id="menu">
+					<h2>메뉴</h2>
+					<ul>
+						<li><a href="/">홈으로</a></li>
+						{# 자치구 목록 #}
+						{% for g in gu_list %}
+						<li><a href="{{ url_for('map_page', gu=g) }}">{{ g }}</a></li>
+						{% endfor %}
+					</ul>
+				</nav>
 
 				<!-- Main -->
 				 <!-- 관리자 전용 CSS -->
@@ -79,6 +84,5 @@
 			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/util.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
 	</body>
 </html>
