@@ -115,7 +115,7 @@ input, select, textarea {
 
 /* Type */
 
-	body, input, select, textarea {
+	body, input, select, textarea, svg text {
 		color: #585858;
 		font-family: "Source Sans Pro", Helvetica, sans-serif;
 		font-size: 16pt;

@@ -237,6 +237,8 @@
     fill: darkblue;
     cursor: pointer;
   }
-  g text{
-    font-family: 'Courier New', Courier, monospace;
+  svg > g > g > text {
+    fill: black;
+    font-size: 30px;
+    font-family: sans-serif;
   }
