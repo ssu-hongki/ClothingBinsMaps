@@ -28,7 +28,7 @@
       <div class="inner">
         <a href="/" class="logo">
           <span class="symbol"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" /></span>
-          <span class="title">{{ gu or '서울시' }} 의류수거함 지도</span>
+          <span class="title">SEOUL</span>
         </a>
         <nav>
           <ul>
@@ -58,10 +58,10 @@
         <!-- 검색창 -->
         <section>
           <header class="major">
-            <h2>{{ gu or '서울시' }} 의류수거함 위치</h2>
+            <h2 style="font-size: 1.6em;">{{ gu or '서울시' }} 의류수거함 위치</h2>
           </header>
-          <div id="search-box">
-            <input type="text" id="search-input" placeholder="주소 또는 장소 검색(수정하면 바뀌나 테스트 하는 괄호)">
+          <div id="search-box" >
+            <input type="text" id="search-input" placeholder="주소 또는 장소 검색" >
             <button onclick="searchLocation()">검색</button>
           </div>
         </section>
@@ -72,9 +72,9 @@
         </section>
 
         <!-- 수거함 정보 및 후기 작성 -->
-        <section>
+        <section style="margin-top: 40px;">
           <header class="major">
-            <h3>수거함 정보 및 후기 작성</h3>
+            <h3 style="font-size: 1.6em;">수거함 정보 및 후기 작성</h3>
           </header>
           <div id="info">
             <h3 id="bin-title"></h3>
@@ -82,7 +82,7 @@
             <form method="POST" action="/add-review">
               <input type="hidden" name="bin_id" id="bin-id-input">
               <input type="hidden" name="gu" value="{{ gu }}">
-              <textarea name="content" placeholder="후기를 입력하세요..."></textarea>
+              <textarea name="content" placeholder="후기를 입력하세요."></textarea>
               <br>
               <button type="submit">작성</button>
             </form>
