@@ -47,7 +47,10 @@
         {% for g in gu_list %}
         <li><a href="{{ url_for('map_page', gu=g) }}">{{ g }}</a></li>
         {% endfor %}
-        <li><a href="/admin">관리자 페이지</a></li>
+        {# admin로그인 했을때만 관리자 페이지 노출 #}
+        {% if session.get('admin') %}
+        <li><a href="{{ url_for('admin_entry') }}">관리자 페이지</a></li>
+        {% endif %}
       </ul>
     </nav>
 
