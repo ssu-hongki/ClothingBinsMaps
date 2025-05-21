@@ -110,6 +110,10 @@
 
   <!-- Scripts -->
   <script>
+  window.gu = "{{ gu }}";  // ← 이렇게 명시적으로 gu 설정
+  const isAdmin = {{ 'true' if session.get('admin') else 'false' }};
+  </script>
+  <script>
     const gu = "{{ gu }}";
     const isAdmin = {{ 'true' if session.get('admin') else 'false' }};
   </script>

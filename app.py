@@ -47,16 +47,17 @@ def map_page():
 def gu_page(gu_name):
     return redirect(f"/map?gu={gu_name}")
 
-# ✅ 3️⃣ 수거함 위치 마커 데이터
+ # ✅ 3️⃣ 수거함 위치 마커 데이터
 @app.route('/bins')
 def bins():
     gu = request.args.get('gu')
     conn = get_connection()
     cursor = conn.cursor()
     if gu:
-        cursor.execute("SELECT * FROM bins WHERE gu = %s", (gu,))
+        cursor.execute("SELECT id, name, address, lat, lng FROM bins WHERE gu = %s", (gu,))
     else:
-        cursor.execute("SELECT * FROM bins")
+        cursor.execute("SELECT id, name, address, lat, lng FROM bins")
+
     bins = cursor.fetchall()
     conn.close()
     return jsonify(bins)
