@@ -24,9 +24,16 @@ def get_connection():
 def generic():
     return render_template('generic.html')
 # ✅ 1️⃣ 홈화면: 구 선택 페이지
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('home.html')
+    gu_list = [
+        "종로구", "성동구", "광진구", "동대문구", "중랑구",
+        "성북구", "강북구", "은평구", "서대문구", "마포구",
+        "양천구", "강서구", "금천구", "영등포구", "동작구",
+        "관악구", "서초구", "강남구", "송파구"
+    ]
+    return render_template("home.html", gu_list=gu_list)
+
 
 # ✅ 2️⃣ 지도 페이지
 @app.route('/map')
